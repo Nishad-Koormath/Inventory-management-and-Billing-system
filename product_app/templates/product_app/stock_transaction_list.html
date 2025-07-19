@@ -7,6 +7,18 @@
     <h2 class="mb-4">Stock Transaction History</h2>
 
     <form method="get">
+        <label for="">Filter by Category:</label>
+        <select name="category" id="">
+            <option value="">All</option>
+            {% for cat in categories %}
+            <option value="{{ cat.id }}" {% if request.GET.category == cat.id|stringformat:"s" %}selected{% endif %}>
+                {{ cat.name }}
+            </option>
+            {% endfor %}
+        </select>
+
+
+
     <label>Filter by Product:</label>
     <select name="product">
         <option value="">All</option>
@@ -52,5 +64,10 @@
             {% endfor %}
         </tbody>
     </table>
+<div style="padding: 10px; border: 1px solid #ccc; margin-bottom: 15px;">
+    <strong>Summary:</strong><br>
+    Total Stock Added: <strong>{{ total_in }}</strong><br>
+    Total Stock Removed: <strong>{{ total_out }}</strong>
+</div>
 </div>
 {% endblock %}

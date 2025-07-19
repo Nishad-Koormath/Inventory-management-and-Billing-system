@@ -3,6 +3,7 @@ from .models import Product, Supplier, Category, StockTransaction
 from .forms import ProductForm, SupplierForm, CategoryForm, StockTransactionForm
 from django.core.exceptions import ValidationError
 from django.utils.dateparse import parse_date
+from django.db.models import Sum
 
 # Create your views here.
 # product
@@ -123,12 +124,16 @@ def stock_transaction(request):
 
 def stock_transaction_list(request):
     products = Product.objects.all()
+    categories = Category.objects.all()
     transactions = StockTransaction.objects.select_related('product').order_by('-timestamp')
     
     product_id = request.GET.get('product')
+    category_id = request.GET.get('category')
     start_date = request.GET.get('start_date')
     end_date = request.GET.get('end_date')
     
+    if category_id:
+        transactions = transactions.filter(product__category__id=category_id)
     if product_id:
         transactions = transactions.filter(product__id = product_id )
     if start_date:
@@ -136,7 +141,14 @@ def stock_transaction_list(request):
     if end_date:
         transactions = transactions.filter(timestamp__date__lte=parse_date(end_date))
         
+    total_in = transactions.filter(transaction_types = 'IN').aggregate(Sum('quantity'))['quantity__sum'] or 0
+    total_out = transactions.filter(transaction_types = 'OUT').aggregate(Sum('quantity'))['quantity__sum'] or 0
+    
+        
     return render(request, 'product_app/stock_transaction_list.html', {
         'transactions': transactions,
         'products': products,
+        'categories': categories,
+        'total_in': total_in,
+        'total_out': total_out,
         })
