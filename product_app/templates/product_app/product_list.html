@@ -1,0 +1,33 @@
+{% extends 'base.html' %} 
+
+{% block title %}Product List{% endblock %} 
+
+{% block content %}
+<h2>Product List</h2>
+<a href="{% url 'product_add' %}">Add Product</a>
+<table border="1">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Category</th>
+      <th>Brand</th>
+      <th>Stock</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for product in products %}
+    <tr>
+      <td>{{product.name}}</td>
+      <td>{{product.category}}</td>
+      <td>{{product.brand}}</td>
+      <td>{{product.stock}}</td>
+      <td>
+        <a href="{% url 'product_edit' product.pk %}">Edit</a>
+        <a href="{% url 'product_delete' product.pk %}">Delete</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
