@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}Stock Report{% endblock %}
+
+{% block content %}
+<h2>Stock Report (Running Balance)</h2>
+
+<form action="" method="get" class="mb-3">
+    <label for="">filter by category:</label>
+    <select name="category" id="">
+        <option value="">All</option>
+        {% for cat in category %}
+        <option value="{{ cat.name }}" {% if selected_category == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>
+        {% endfor %}
+
+        <label for="">From date:</label>
+        <input type="date" name="start_date" value="{{ start_date }}">
+
+        <label for="">To date:</label>
+        <input type="date" name="end_date" value="{{ end_date }}">
+
+        <button type="submit">Filter</button>
+    </select>
+
+</form>
+
+<form method="get">
+    <input type="hidden" name="category" value="{{ selected_category }}">
+    <input type="hidden" name="product" value="{{ selected_product }}">
+    <input type="hidden" name="start_date" value="{{ start_date }}">
+    <input type="hidden" name="end_date" value="{{ end_date }}">
+    <input type="hidden" name="export" value="excel">
+    <button type="submit">Export to Excel</button>
+</form>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Product</th>
+            <th>Stock In</th>
+            <th>Stock Out</th>
+            <th>Running Balance</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in report_data %}
+        <tr>
+            <td>{{ row.date|date:"d-m-Y H:i" }}</td>
+            <td>{{ row.product }}</td>
+            <td>{{ row.in }}</td>
+            <td>{{ row.out }}</td>
+            <td>{{ row.balance }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="text-center">No data available.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
