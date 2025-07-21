@@ -152,3 +152,31 @@ def stock_transaction_list(request):
         'total_in': total_in,
         'total_out': total_out,
         })
+    
+    
+def stock_report(request):
+    products = Product.objects.all()
+    report_data = []
+    
+    for product in products:
+        transactions = StockTransaction.objects.filter(product=product).order_by('timestamp')
+        
+        balance = 0
+        product_report = []
+        
+        for tx in transactions:
+            qty_in = tx.quantity if tx.transaction_types == 'IN' else 0
+            qty_out = tx.quantity if tx.transaction_types == 'OUT' else 0
+            balance += qty_in - qty_out
+            
+            product_report.append({
+                'date': tx.timestamp,
+                'product': product.name,
+                'in': qty_in,
+                'out': qty_out, 
+                'balance': balance,
+            })
+            
+        if product_report:
+            report_data.extend(product_report)
+    return render(request, 'product_app/stock_report.html', {'report_data': report_data})
