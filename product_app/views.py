@@ -1,9 +1,14 @@
 from django.shortcuts import render, redirect, get_object_or_404
+import openpyxl.workbook
 from .models import Product, Supplier, Category, StockTransaction
 from .forms import ProductForm, SupplierForm, CategoryForm, StockTransactionForm
 from django.core.exceptions import ValidationError
 from django.utils.dateparse import parse_date
 from django.db.models import Sum
+from openpyxl import Workbook
+from openpyxl.utils import get_column_letter
+from django.http import HttpResponse
+from django.utils.dateparse import parse_date
 
 # Create your views here.
 # product
@@ -155,11 +160,40 @@ def stock_transaction_list(request):
     
     
 def stock_report(request):
+    categories = Category.objects.all()
     products = Product.objects.all()
+    
+    selected_category = request.GET.get('category')
+    selected_product = request.GET.get('product')
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    export = request.GET.get('export')
+    
+    if selected_category == 'None':
+        selected_category = None
+    if selected_product == 'None':
+        selected_product = None
+    if start_date == 'None':
+        start_date = None
+    if end_date == 'None':
+        end_date = None
+    
+    filtered_product = products
+    
+    if selected_category:
+        filtered_product = filtered_product.filter(category_id = selected_category)
+    if selected_product:
+        filtered_product = filtered_product.filter(id = selected_product)
+    
     report_data = []
     
-    for product in products:
+    for product in filtered_product:
         transactions = StockTransaction.objects.filter(product=product).order_by('timestamp')
+        
+        if start_date:
+            transactions = transactions.filter(timestamp__date__gte = start_date)
+        if end_date:
+            transactions = transactions.filter(timestamp__date_lte = end_date)
         
         balance = 0
         product_report = []
@@ -179,4 +213,40 @@ def stock_report(request):
             
         if product_report:
             report_data.extend(product_report)
-    return render(request, 'product_app/stock_report.html', {'report_data': report_data})
+        
+    if export == 'excel':
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Stock report"
+        
+        headers = ['Date', 'Product', 'In', 'Out', "Balance"]
+        ws.append(headers)
+        
+        for row in report_data:
+            ws.append([
+                row['date'].strftime('%d-%m-%Y %H:%M'),
+                row['product'],
+                row['in'],
+                row['out'],
+                row['balance']
+            ])
+        
+        for col in ws.columns:
+            max_length = max(len(str(cell.value)) if cell.value else 0 for cell in col)
+            ws.column_dimensions[get_column_letter(col[0].column)].width = max_length + 2
+            
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename=stock_report.xlsx'
+        wb.save(response)
+        return response
+        
+    context = {
+        'categories': categories,
+        'products': products,
+        'report_data': report_data,
+        'selected_category': selected_category,
+        'selected_product': selected_product,
+        'start_date': start_date,
+        'end_date': end_date,
+    }
+    return render(request, 'product_app/stock_report.html', context)
