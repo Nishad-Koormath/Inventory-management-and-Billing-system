@@ -17,7 +17,4 @@ urlpatterns = [
     path('category/edit/<int:pk>/', views.category_edit, name='category_edit'),
     path('category/delete/<int:pk>/', views.category_delete, name='category_delete'),
     
-    path('stock/', views.stock_transaction, name='stock_transaction'),
-    path('stock/history', views.stock_transaction_list, name='stock_transaction_list'),
-    path('stock-report/', views.stock_report, name='stock_report'),
 ]
