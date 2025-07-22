@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>All Bills</h2>
+<table border="1">
+    <thead>
+        <tr>
+            <th>Bill No</th>
+            <th>Customer</th>
+            <th>Date</th>
+            <th>Total</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for bill in bills %}
+        <tr>
+            <td>{{ bill.bill_no }}</td>
+            <td>{{ bill.customer_name }}</td>
+            <td>{{ bill.created_at|date:"d-m-Y H:i" }}</td>
+            <td>₹ {{ bill.total_amount }}</td>
+            <td><a href="#">View</a></td>  
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5">No bills yet.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
