@@ -1,0 +1,74 @@
+<h1>Create Bill</h1>
+<form method="POST">
+    {% csrf_token %}
+
+    <label>Customer name:</label>
+    {{ bill_form.customer_name }}
+
+    <div id="formset-container">
+        {{ formset.management_form }}
+        {% for form in formset %}
+            <div class="form-row">
+                {{ form.product }} {{ form.quantity }}
+                <button type="button" class="remove-form">Remove</button>
+            </div>
+        {% endfor %}
+    </div>
+
+    <button type="button" id="add-form">Add Product</button>
+    <button type="submit">Generate Bill</button>
+</form>
+
+<script>
+    const formsetContainer = document.getElementById('formset-container');
+    const addFormBtn = document.getElementById('add-form');
+    const totalFormsInput = document.querySelector('[name="form-TOTAL_FORMS"]');
+
+    function updateRemoveButton(){
+        const rows = formsetContainer.querySelectorAll('.form-row');
+        const removeButtons = formsetContainer.querySelectorAll('.remove-form');
+
+        if (rows.length === 1){
+            removeButtons.forEach(btn => btn.disabled = true);
+        } else {
+            removeButtons.forEach(btn => btn.disabled = false);
+        }
+    }
+
+    addFormBtn.addEventListener('click', () => {
+        const currentFormCount = parseInt(totalFormsInput.value);
+        const newFormHtml = document.querySelector('.form-row').outerHTML.replace(/form-\d+/g, `form-${currentFormCount}`);
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = newFormHtml;
+        const newForm = tempDiv.firstChild;
+
+        // Clear the input values
+        newForm.querySelectorAll('select, input').forEach(input => {
+            if (input.type !== 'hidden') {
+                input.value = '';
+            }
+        });
+
+        formsetContainer.appendChild(newForm);
+        totalFormsInput.value = currentFormCount + 1;
+
+    updateRemoveButton()
+});
+
+    // Optional: Remove row
+    formsetContainer.addEventListener('click', function (e) {
+        if (e.target.classList.contains('remove-form')) {
+            const rows = formsetContainer.querySelectorAll('.form-row');
+            if (rows.length > 1){
+                e.target.parentElement.remove();
+
+                const total = formsetContainer.querySelectorAll('.form-row').length;
+                totalFormsInput.value = total;
+
+                updateRemoveButton()
+            } else {
+                alert("At least one product item is required.");
+            }
+    }});
+    updateRemoveButton()
+</script>
