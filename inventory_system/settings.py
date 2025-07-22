@@ -40,7 +40,7 @@ INSTALLED_APPS = [
     'accounts_app',
     'billing_app',
     'inventory_app',
-    'product_app',
+    'product_app.apps.ProductAppConfig',
 ]
 
 MIDDLEWARE = [
