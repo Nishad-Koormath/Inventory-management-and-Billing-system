@@ -1,13 +1,28 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.forms import modelformset_factory
+from django.forms import modelformset_factory, BaseModelFormSet
 from .models import Bill, BillItem
 from .forms import BillForm, BillItemForm 
 from django.utils.crypto import get_random_string
 from inventory_app.models import StockTransaction
+from django.core.exceptions import ValidationError
 
 # Create your views here.
+class BaseBillItemFormSet(BaseModelFormSet):
+    def clean(self):
+        super().clean()
+        seen_products = set()
+        
+        for form in self.forms:
+            if form.cleaned_data and not form.cleaned_data.get('DELETE', False):
+                product = form.cleaned_data.get('product')
+                if product in seen_products:
+                    form.add_error('product', 'This product is already added to the bill.')
+                else:
+                    seen_products.add(product)
+                
+
 def create_bill(request):
-    BillItemFormSet = modelformset_factory(BillItem, form=BillItemForm, extra=1, can_delete=True)
+    BillItemFormSet = modelformset_factory(BillItem, form=BillItemForm, formset=BaseBillItemFormSet, extra=1, can_delete=True)
     
     if request.method == 'POST':
         bill_form = BillForm(request.POST)

@@ -1,4 +1,8 @@
+{% extends 'base.html' %}
+
+{% block content %}
 <h1>Create Bill</h1>
+
 <form method="POST">
     {% csrf_token %}
 
@@ -9,7 +13,24 @@
         {{ formset.management_form }}
         {% for form in formset %}
             <div class="form-row">
-                {{ form.product }} {{ form.quantity }}
+                {{ form.product.label_tag }} {{ form.product }}
+                {% if form.product.errors %}
+                    <div style="color: red;">
+                        {{ form.product.errors.as_text }}
+                    </div>
+                {% endif %}
+
+                {{ form.quantity.label_tag }} {{ form.quantity }}
+                {% if form.quantity.errors %}
+                    <div style="color: red;">
+                        {{ form.quantity.errors.as_text }}
+                    </div>
+                {% endif %}
+
+                {% if form.DELETE %}
+                    {{ form.DELETE }}
+                {% endif %}
+
                 <button type="button" class="remove-form">Remove</button>
             </div>
         {% endfor %}
@@ -24,11 +45,11 @@
     const addFormBtn = document.getElementById('add-form');
     const totalFormsInput = document.querySelector('[name="form-TOTAL_FORMS"]');
 
-    function updateRemoveButton(){
+    function updateRemoveButton() {
         const rows = formsetContainer.querySelectorAll('.form-row');
         const removeButtons = formsetContainer.querySelectorAll('.remove-form');
 
-        if (rows.length === 1){
+        if (rows.length === 1) {
             removeButtons.forEach(btn => btn.disabled = true);
         } else {
             removeButtons.forEach(btn => btn.disabled = false);
@@ -52,23 +73,58 @@
         formsetContainer.appendChild(newForm);
         totalFormsInput.value = currentFormCount + 1;
 
-    updateRemoveButton()
-});
+        updateRemoveButton();
+        updateProductOptions();  // Also update product dropdown disabling
+    });
 
-    // Optional: Remove row
     formsetContainer.addEventListener('click', function (e) {
         if (e.target.classList.contains('remove-form')) {
             const rows = formsetContainer.querySelectorAll('.form-row');
-            if (rows.length > 1){
+            if (rows.length > 1) {
                 e.target.parentElement.remove();
 
                 const total = formsetContainer.querySelectorAll('.form-row').length;
                 totalFormsInput.value = total;
 
-                updateRemoveButton()
+                updateRemoveButton();
+                updateProductOptions();  // Refresh dropdowns after remove
             } else {
                 alert("At least one product item is required.");
             }
-    }});
-    updateRemoveButton()
+        }
+    });
+
+    // Disable already-selected products across all selects
+    function updateProductOptions() {
+        let selects = document.querySelectorAll("select[name$='-product']");
+        let selectedValues = new Set();
+
+        selects.forEach(select => {
+            if (select.value) {
+                selectedValues.add(select.value);
+            }
+        });
+
+        selects.forEach(currentSelect => {
+            let currentValue = currentSelect.value;
+
+            currentSelect.querySelectorAll("option").forEach(option => {
+                if (option.value && option.value !== currentValue && selectedValues.has(option.value)) {
+                    option.disabled = true;
+                } else {
+                    option.disabled = false;
+                }
+            });
+        });
+    }
+
+    document.addEventListener("change", function (e) {
+        if (e.target.name.endsWith("-product")) {
+            updateProductOptions();
+        }
+    });
+
+    updateRemoveButton();
+    updateProductOptions();
 </script>
+{% endblock %}
