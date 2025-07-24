@@ -26,9 +26,6 @@ def create_bill(request):
                     item.price = item.product.sales_price
                     item.save()
                     
-                    #reduce stock 
-                    item.product.stock -= item.quantity
-                    item.product.save()
                 
                     #log_stock_out
                     StockTransaction.objects.create(
